@@ -10,15 +10,21 @@ export class Modal extends Component {
     window.removeEventListener('keydown', this.closeModal);
   }
 
-  closeModal = e => {
-    const { closeModal } = this.props;
-
+  backdropClick = e => {
     if (e.target.nodeName === 'DIV') {
-      closeModal();
+      this.props.closeModal();
     }
+  };
+
+  pressKeyDown = e => {
     if (e.code === 'Escape') {
-      closeModal();
+      this.props.closeModal();
     }
+  };
+
+  closeModal = e => {
+    this.backdropClick(e);
+    this.pressKeyDown(e);
   };
 
   render() {

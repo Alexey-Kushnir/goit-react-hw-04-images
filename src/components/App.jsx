@@ -60,17 +60,16 @@ export class App extends Component {
       return;
     }
 
+    if (inputValue === this.state.query) {
+      toast('Photos have been found');
+      return;
+    }
+
     this.setState({
       page: 1,
       query: inputValue,
       items: [],
     });
-
-    if (inputValue === this.state.query) {
-      this.setState({
-        query: `${inputValue} `,
-      });
-    }
   };
 
   loadMore = () => {
