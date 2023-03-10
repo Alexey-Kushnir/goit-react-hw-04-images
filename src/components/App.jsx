@@ -20,16 +20,20 @@ export const App = () => {
       return;
     }
 
+    const abortController = new AbortController();
     const getItems = async () => {
       try {
         setIsLoading(true);
-        const responseData = await AxiosApiService(query, page);
+        const responseData = await AxiosApiService(
+          query,
+          page,
+          abortController
+        );
         if (responseData.totalHits < 1) {
           toast('Nothing found!');
           setIsLoading(false);
           return;
         }
-
         const hits = responseData.hits.length;
         setTotalHits(hits);
 
@@ -38,7 +42,6 @@ export const App = () => {
           const itemData = { id, webformatURL, largeImageURL };
           return itemData;
         });
-
         setItems(prevState => [...prevState, ...filteredData]);
         setIsLoading(false);
       } catch (error) {
@@ -47,8 +50,9 @@ export const App = () => {
         console.log(`IsError: ${isError}, ${error}`);
       }
     };
-
     getItems();
+
+    return () => abortController.abort();
   }, [setItems, page, query, isError]);
 
   const handleSubmit = inputValue => {
