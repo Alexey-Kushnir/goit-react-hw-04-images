@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AxiosApiService } from './services/services';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.min.css';
@@ -7,96 +7,89 @@ import { Loader } from './Loader/Loader';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
 
-export class App extends Component {
-  state = {
-    page: 1,
-    query: '',
-    totalHits: 0,
-    isLoading: false,
-    items: [],
-    error: false,
-  };
+export const App = () => {
+  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState('');
+  const [totalHits, setTotalHits] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [items, setItems] = useState([]);
+  const [isError, setIsError] = useState(false);
 
-  async componentDidUpdate(_, prevState) {
-    const { query, page } = this.state;
-
-    if (query !== prevState.query || page !== prevState.page) {
-      this.getItems();
+  useEffect(() => {
+    if (!query) {
+      return;
     }
-  }
 
-  getItems = async () => {
-    const { query, page, items } = this.state;
+    const getItems = async () => {
+      try {
+        setIsLoading(true);
+        const responseData = await AxiosApiService(query, page);
+        if (responseData.totalHits < 1) {
+          toast('Nothing found!');
+          setIsLoading(false);
+          return;
+        }
 
-    try {
-      this.setState({ isLoading: true });
-      const responseData = await AxiosApiService(query, page);
-      if (responseData.totalHits < 1) {
-        toast('Nothing found!');
+        const hits = responseData.hits.length;
+        setTotalHits(hits);
+
+        const filteredData = responseData.hits.map(item => {
+          const { id, webformatURL, largeImageURL } = item;
+          const itemData = { id, webformatURL, largeImageURL };
+          return itemData;
+        });
+
+        setItems(prevState => [...prevState, ...filteredData]);
+        setIsLoading(false);
+      } catch (error) {
+        setIsError(true);
+        setIsLoading(false);
+        console.log(`IsError: ${isError}, ${error}`);
       }
+    };
 
-      const hits = responseData.hits.length;
-      this.setState({ totalHits: hits });
+    getItems();
+  }, [setItems, page, query, isError]);
 
-      const filteredData = responseData.hits.map(item => {
-        const { id, webformatURL, largeImageURL } = item;
-        const itemData = { id, webformatURL, largeImageURL };
-        return itemData;
-      });
-
-      this.setState({
-        items: [...items, ...filteredData],
-        isLoading: false,
-      });
-    } catch (error) {
-      this.setState({ error: true, isLoading: false });
-      console.log(error);
-    }
-  };
-
-  handleSubmit = inputValue => {
+  const handleSubmit = inputValue => {
     if (inputValue === '') {
       toast('Please enter your search term');
       return;
     }
 
-    if (inputValue === this.state.query) {
+    if (items.length < 1 && inputValue === query) {
+      toast('Nothing found!');
+      return;
+    }
+
+    if (inputValue === query) {
       toast('Photos have been found');
       return;
     }
 
-    this.setState({
-      page: 1,
-      query: inputValue,
-      items: [],
-    });
+    setPage(1);
+    setQuery(inputValue);
+    setItems([]);
   };
 
-  loadMore = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const loadMore = () => {
+    setPage(prevState => prevState + 1);
   };
 
-  render() {
-    const { isLoading, items, totalHits } = this.state;
-    const { handleSubmit, loadMore } = this;
-
-    return (
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr',
-          gridGap: '16px',
-          paddingBottom: '24px',
-        }}
-      >
-        <Searchbar onSubmit={handleSubmit} />
-        <ToastContainer />
-        {items.length > 0 && <ImageGallery items={items} />}
-        {isLoading && <Loader />}
-        {items.length > 0 && totalHits - 11 >= 1 && (
-          <Button onClick={loadMore} />
-        )}
-      </div>
-    );
-  }
-}
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        gridGap: '16px',
+        paddingBottom: '24px',
+      }}
+    >
+      <Searchbar onSubmit={handleSubmit} />
+      <ToastContainer />
+      {items.length > 0 && <ImageGallery items={items} />}
+      {isLoading && <Loader />}
+      {items.length > 0 && totalHits - 11 >= 1 && <Button onClick={loadMore} />}
+    </div>
+  );
+};
