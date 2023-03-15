@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { AxiosApiService } from './services/services';
-import { ToastContainer, toast } from 'react-toastify';
+import { useEffect, useState } from 'react';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.min.css';
 import { Searchbar } from './Searchbar/Searchbar';
+import { AxiosApiService } from './services/services';
 import { Loader } from './Loader/Loader';
-import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
+// import { ImageGrid } from './ContentLoader/ContentLoader';
+import { ImageGallery } from './ImageGallery/ImageGallery';
 
 export const App = () => {
   const [page, setPage] = useState(1);
@@ -19,8 +20,9 @@ export const App = () => {
     if (!query) {
       return;
     }
-
+    // added for practice
     const abortController = new AbortController();
+
     const getItems = async () => {
       try {
         setIsLoading(true);
@@ -46,8 +48,9 @@ export const App = () => {
         setIsLoading(false);
       } catch (error) {
         setIsError(true);
-        setIsLoading(false);
         console.log(`IsError: ${isError}, ${error}`);
+      } finally {
+        setIsLoading(false);
       }
     };
     getItems();
@@ -91,8 +94,9 @@ export const App = () => {
     >
       <Searchbar onSubmit={handleSubmit} />
       <ToastContainer />
-      {items.length > 0 && <ImageGallery items={items} />}
       {isLoading && <Loader />}
+      {/* {isLoading && <ImageGrid />} */}
+      {items.length > 0 && <ImageGallery items={items} />}
       {items.length > 0 && totalHits - 11 >= 1 && <Button onClick={loadMore} />}
     </div>
   );
